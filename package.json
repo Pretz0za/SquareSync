@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@tonaljs/midi": "^4.10.2"
+  }
+}
