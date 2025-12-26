@@ -1,5 +1,9 @@
 {
-  "dependencies": {
-    "@tonaljs/midi": "^4.10.2"
-  }
+	"dependencies": {
+		"@tonejs/midi": "^2.0.28"
+	},
+	"devDependencies": {
+		"@types/node": "^25.0.3",
+		"typescript": "^5.9.3"
+	}
 }
