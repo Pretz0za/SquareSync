@@ -2,7 +2,7 @@ import { NotePattern, Square, RGBColor } from './parseMidi';
 
 const SMALL_SQUARE_SIDE_LENGTH = 50;
 const BOUNDARY_SIDE_LENGTH = 400;
-const TEMPO = 160; //95;
+const TEMPO = 108; //95;
 const PPQ = 96;
 const FPS = 60;
 const TICKS_PER_SECOND = (TEMPO / 60) * PPQ; // 152 ticks/second

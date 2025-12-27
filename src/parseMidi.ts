@@ -164,7 +164,7 @@ const main = async () => {
 	const midi = new Midi(file);
 	const tempo = midi.header.tempos[0]?.bpm || 120; // BPM
 	const ppq = midi.header.ppq; // Pulses (ticks) per quarter note
-	notes = midi.tracks[1]!.notes;
+	notes = midi.tracks[2]!.notes;
 	console.log(tempo, ppq); // 42
 	let used: boolean[] = Array(notes.length).fill(false);
 	let patterns = calculatePatterns(used);
