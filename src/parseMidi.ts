@@ -3,6 +3,7 @@ import { Note } from '@tonejs/midi/dist/Note';
 import assert from 'node:assert';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { makeSquare } from './makeSquares';
 
 export type RGBColor = {
 	red: number;
@@ -12,8 +13,8 @@ export type RGBColor = {
 
 export type Square = {
 	sideLength: number;
-	x: number;
-	y: number;
+	deltaX: number;
+	deltaY: number;
 	velX: number;
 	velY: number;
 };
@@ -26,7 +27,7 @@ export type NotePattern = {
 let notes: Note[] = [];
 
 function createPattern(note1: Note, note2: Note): NotePattern {
-	assert(note1.ticks < note2.ticks);
+	assert(note1.ticks <= note2.ticks);
 	return { begin: note1.ticks, frequency: note2.ticks - note1.ticks };
 }
 
@@ -37,14 +38,21 @@ function binarySearchNotes(
 	left: number,
 	right: number,
 ): number {
-	let mid;
+	let mid, result;
 	while (left <= right) {
 		mid = left + Math.trunc((right - left) / 2);
-		if (notes[mid]!.ticks === target) return mid;
-		else if (notes[mid]!.ticks > target) right = mid - 1;
-		else left = mid + 1;
+
+		if (notes[mid]!.ticks === target) {
+			result = mid;
+			right = mid - 1;
+		} else if (notes[mid]!.ticks > target) {
+			right = mid - 1;
+		} else {
+			left = mid + 1;
+		}
 	}
-	return -1;
+
+	return result ?? -1;
 }
 
 // Verifies the two following properties. 1- There are no missed notes in the
@@ -75,21 +83,21 @@ function consumePattern(pattern: NotePattern, used: boolean[]) {
 	while (currTick <= maxTick) {
 		idx = binarySearchNotes(currTick, idx + 1, notes.length - 1);
 		if (idx == -1) return false; // not found
-		used[idx] = !used[idx];
+		while (used[idx]) idx++;
+		used[idx] = true;
 		currTick += pattern.frequency;
 	}
+
 	return true;
 }
 
+// Assumes the pattern is valid
 function patternLength(pattern: NotePattern): number {
 	let currTick = pattern.begin;
-	let idx = -1;
 	let maxTick = notes[notes.length - 1]!.ticks;
 	let count = 0;
 
 	while (currTick <= maxTick) {
-		idx = binarySearchNotes(currTick, idx + 1, notes.length - 1);
-		if (idx == -1) return -1; // not found
 		currTick += pattern.frequency;
 		count++;
 	}
@@ -143,8 +151,9 @@ function calculatePatterns(used: boolean[]): NotePattern[] {
 	let output: NotePattern[] = [];
 	let idx;
 	while ((idx = used.indexOf(false)) !== -1) {
-		let pattern = longestPattern(used, idx);
-		consumePattern(pattern, used);
+		let pattern = longestPatternStartingAt(idx, used).pattern;
+		//let pattern = longestPattern(used, idx);
+		assert(consumePattern(pattern, used));
 		output.push(pattern);
 	}
 	return output;
@@ -153,28 +162,32 @@ function calculatePatterns(used: boolean[]): NotePattern[] {
 const main = async () => {
 	const file = await readFile(process.argv[2]!);
 	const midi = new Midi(file);
-	notes = midi.tracks[2]!.notes;
-	console.log(notes.length); // 42
-	// midi.tracks.forEach((track) => {
-	// 	console.log('track');
-	// 	track.notes.forEach((note) => {
-	// 		console.log(note.ticks);
-	// 	});
-	// });
+	const tempo = midi.header.tempos[0]?.bpm || 120; // BPM
+	const ppq = midi.header.ppq; // Pulses (ticks) per quarter note
+	notes = midi.tracks[1]!.notes;
+	console.log(tempo, ppq); // 42
 	let used: boolean[] = Array(notes.length).fill(false);
 	let patterns = calculatePatterns(used);
-	patterns.forEach((pattern, idx) => {
-		console.log(
-			'Pattern # ',
-			idx + 1,
-			': ',
-			pattern.begin,
-			' + ',
-			pattern.frequency,
-			'x',
+	let squares: Square[] = [];
+
+	console.log(patterns);
+
+	for (let i = 1; i < patterns.length; i += 2) {
+		console.log(i);
+		squares.push(makeSquare(patterns[i]!, patterns[i - 1]!));
+	}
+
+	if (patterns.length % 2 === 1) {
+		console.log('length', patterns.length, patterns[patterns.length - 1]);
+		squares.push(
+			makeSquare(
+				patterns[patterns.length - 1]!,
+				patterns[patterns.length - 1]!,
+			),
 		);
-	});
-	notes.forEach((note) => console.log(note.ticks));
+	}
+
+	squares.forEach((square) => console.log(square, ','));
 };
 
 main();

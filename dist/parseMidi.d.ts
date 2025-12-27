@@ -5,8 +5,8 @@ export type RGBColor = {
 };
 export type Square = {
     sideLength: number;
-    x: number;
-    y: number;
+    deltaX: number;
+    deltaY: number;
     velX: number;
     velY: number;
 };
