@@ -1,6 +1,9 @@
 let boundaryCenter = [400, 400];
 let boundarySideLength = 400;
 let squareSideLength = 50;
+let colorFadeSpeed = 30;
+let started = false;
+let song;
 
 let input = [
 	{
@@ -217,6 +220,10 @@ let input = [
 
 let squares = [];
 
+function randomHue() {
+	return 360 * ((sin(PI * Math.random() - 1.5) + 1) / 2);
+}
+
 class Square {
 	constructor(velX, velY, deltaX, deltaY, directionX, directionY) {
 		this.velX = velX * directionX;
@@ -229,7 +236,9 @@ class Square {
 			boundaryCenter[1] -
 			(boundarySideLength / 2) * directionY +
 			(deltaY + squareSideLength / 2) * directionY;
-		console.log(velX);
+		this.lastHit = -1000;
+		this.opacity = 0;
+		this.color = 0;
 	}
 
 	draw() {
@@ -239,6 +248,8 @@ class Square {
 				(this.x + squareSideLength / 2) <
 			0
 		) {
+			this.lastHit = frameCount;
+			this.color = randomHue();
 			this.velX *= -1;
 			this.x =
 				boundaryCenter[0] + boundarySideLength / 2 - squareSideLength / 2;
@@ -248,6 +259,8 @@ class Square {
 				(this.x - squareSideLength / 2) >
 			0
 		) {
+			this.lastHit = frameCount;
+			this.color = randomHue();
 			this.velX *= -1;
 			this.x =
 				boundaryCenter[0] - boundarySideLength / 2 + squareSideLength / 2;
@@ -259,6 +272,8 @@ class Square {
 				(this.y + squareSideLength / 2) <
 			0
 		) {
+			this.lastHit = frameCount;
+			this.color = randomHue();
 			this.velY *= -1;
 			this.y =
 				boundaryCenter[1] + boundarySideLength / 2 - squareSideLength / 2;
@@ -268,13 +283,32 @@ class Square {
 				(this.y - squareSideLength / 2) >
 			0
 		) {
+			this.lastHit = frameCount;
+			this.color = randomHue();
 			this.velY *= -1;
 			this.y =
 				boundaryCenter[1] - boundarySideLength / 2 + squareSideLength / 2;
 		}
+		this.opacity = max(
+			map(frameCount, this.lastHit, this.lastHit + colorFadeSpeed, 255, 0),
+			0,
+		);
+		fill(this.color, 255, 255, this.opacity);
 		rect(this.x, this.y, 50, 50);
 		this.x += this.velX;
 		this.y += this.velY;
+	}
+}
+
+function preload() {
+	song = loadSound('/assets/imagination.mp3');
+}
+
+function mousePressed() {
+	if (!started) {
+		started = true;
+		userStartAudio();
+		song.play();
 	}
 }
 
@@ -307,8 +341,11 @@ function draw() {
 	stroke(0, 0, 0);
 	rect(400, 400, 400, 400);
 
-	fill(255, 255, 255);
-	squares.forEach((square) => {
-		square.draw();
-	});
+	if (started) {
+		colorMode(HSB, 255);
+		squares.forEach((square) => {
+			square.draw();
+		});
+		colorMode(RGB);
+	}
 }
