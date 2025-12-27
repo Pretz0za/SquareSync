@@ -1,15 +1,22 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const midi_1 = require("@tonejs/midi");
-const node_assert_1 = __importDefault(require("node:assert"));
-const promises_1 = require("node:fs/promises");
-const makeSquares_1 = require("./makeSquares");
+let midiFile = null;
+let mp3File = null;
 let notes = [];
+let output = [];
+let trackTempo = -1;
+let trackPPQ = -1;
+function setUpMidiFileUpload() {
+    const input = document.getElementById('midiFileInput');
+    input.addEventListener('change', async () => {
+        var _a;
+        const f = (_a = input.files) === null || _a === void 0 ? void 0 : _a[0];
+        if (!f)
+            return;
+        midiFile = await f.arrayBuffer();
+        main();
+    });
+}
 function createPattern(note1, note2) {
-    (0, node_assert_1.default)(note1.ticks <= note2.ticks);
     return { begin: note1.ticks, frequency: note2.ticks - note1.ticks };
 }
 // Performs a binary search through notes[left : right]. Returns Note such that
@@ -29,7 +36,7 @@ function binarySearchNotes(target, left, right) {
             left = mid + 1;
         }
     }
-    return result ?? -1;
+    return result !== null && result !== void 0 ? result : -1;
 }
 // Verifies the two following properties. 1- There are no missed notes in the
 // pattern, i.e. no x exists such that (begin + x * frequency) has no corresp-
@@ -99,7 +106,6 @@ function longestPatternStartingAt(idx, used) {
 }
 function longestPattern(used, firstFalse) {
     let idx = firstFalse || used.indexOf(false);
-    (0, node_assert_1.default)(idx != -1);
     let output = { begin: 0, frequency: 0 };
     let bestLength = 0;
     for (; idx < notes.length; idx++) {
@@ -117,31 +123,32 @@ function calculatePatterns(used) {
     while ((idx = used.indexOf(false)) !== -1) {
         let pattern = longestPatternStartingAt(idx, used).pattern;
         //let pattern = longestPattern(used, idx);
-        (0, node_assert_1.default)(consumePattern(pattern, used));
+        consumePattern(pattern, used);
         output.push(pattern);
     }
     return output;
 }
-const main = async () => {
-    const file = await (0, promises_1.readFile)(process.argv[2]);
-    const midi = new midi_1.Midi(file);
-    const tempo = midi.header.tempos[0]?.bpm || 120; // BPM
-    const ppq = midi.header.ppq; // Pulses (ticks) per quarter note
-    notes = midi.tracks[2].notes;
-    console.log(tempo, ppq); // 42
+const main = () => {
+    var _a;
+    console.log(Midi);
+    const midi = new Midi(midiFile);
+    trackTempo = ((_a = midi.header.tempos[0]) === null || _a === void 0 ? void 0 : _a.bpm) || 120; // BPM
+    trackPPQ = midi.header.ppq; // Pulses (ticks) per quarter note
+    midi.tracks.forEach((track) => {
+        if (track.notes.length > 0)
+            notes = track.notes;
+    });
     let used = Array(notes.length).fill(false);
     let patterns = calculatePatterns(used);
-    let squares = [];
     console.log(patterns);
     for (let i = 1; i < patterns.length; i += 2) {
         console.log(i);
-        squares.push((0, makeSquares_1.makeSquare)(patterns[i], patterns[i - 1]));
+        output.push(makeSquare(patterns[i], patterns[i - 1]));
     }
     if (patterns.length % 2 === 1) {
         console.log('length', patterns.length, patterns[patterns.length - 1]);
-        squares.push((0, makeSquares_1.makeSquare)(patterns[patterns.length - 1], patterns[patterns.length - 1]));
+        output.push(makeSquare(patterns[patterns.length - 1], patterns[patterns.length - 1]));
     }
-    squares.forEach((square) => console.log(square, ','));
+    output.forEach((square) => console.log(square, ','));
 };
-main();
 //# sourceMappingURL=parseMidi.js.map

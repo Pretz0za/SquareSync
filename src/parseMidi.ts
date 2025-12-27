@@ -1,17 +1,12 @@
-import { Midi } from '@tonejs/midi';
-import { Note } from '@tonejs/midi/dist/Note';
-import assert from 'node:assert';
-import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-import { makeSquare } from './makeSquares';
+declare const Midi: any;
+let midiFile: ArrayBuffer | null = null;
+let mp3File: File | null = null;
+let notes: any[] = [];
+let output: SquareType[] = [];
+let trackTempo = -1;
+let trackPPQ = -1;
 
-export type RGBColor = {
-	red: number;
-	green: number;
-	blue: number;
-};
-
-export type Square = {
+type SquareType = {
 	sideLength: number;
 	deltaX: number;
 	deltaY: number;
@@ -19,15 +14,23 @@ export type Square = {
 	velY: number;
 };
 
-export type NotePattern = {
+type NotePattern = {
 	begin: number;
 	frequency: number;
 };
 
-let notes: Note[] = [];
+function setUpMidiFileUpload() {
+	const input = document.getElementById('midiFileInput') as HTMLInputElement;
 
-function createPattern(note1: Note, note2: Note): NotePattern {
-	assert(note1.ticks <= note2.ticks);
+	input.addEventListener('change', async () => {
+		const f = input.files?.[0];
+		if (!f) return;
+		midiFile = await f.arrayBuffer();
+		main();
+	});
+}
+
+function createPattern(note1: any, note2: any): NotePattern {
 	return { begin: note1.ticks, frequency: note2.ticks - note1.ticks };
 }
 
@@ -132,7 +135,6 @@ function longestPatternStartingAt(
 
 function longestPattern(used: boolean[], firstFalse?: number): NotePattern {
 	let idx = firstFalse || used.indexOf(false);
-	assert(idx != -1);
 	let output: NotePattern = { begin: 0, frequency: 0 };
 	let bestLength = 0;
 
@@ -153,41 +155,32 @@ function calculatePatterns(used: boolean[]): NotePattern[] {
 	while ((idx = used.indexOf(false)) !== -1) {
 		let pattern = longestPatternStartingAt(idx, used).pattern;
 		//let pattern = longestPattern(used, idx);
-		assert(consumePattern(pattern, used));
+		consumePattern(pattern, used);
 		output.push(pattern);
 	}
 	return output;
 }
 
-const main = async () => {
-	const file = await readFile(process.argv[2]!);
-	const midi = new Midi(file);
-	const tempo = midi.header.tempos[0]?.bpm || 120; // BPM
-	const ppq = midi.header.ppq; // Pulses (ticks) per quarter note
-	notes = midi.tracks[2]!.notes;
-	console.log(tempo, ppq); // 42
+const main = () => {
+	const midi = new Midi(midiFile);
+	trackTempo = midi.header.tempos[0]?.bpm || 120; // BPM
+	trackPPQ = midi.header.ppq; // Pulses (ticks) per quarter note
+	midi.tracks.forEach((track) => {
+		if (track.notes.length > 0) notes = track.notes;
+	});
 	let used: boolean[] = Array(notes.length).fill(false);
 	let patterns = calculatePatterns(used);
-	let squares: Square[] = [];
-
-	console.log(patterns);
 
 	for (let i = 1; i < patterns.length; i += 2) {
-		console.log(i);
-		squares.push(makeSquare(patterns[i]!, patterns[i - 1]!));
+		output.push(makeSquare(patterns[i]!, patterns[i - 1]!));
 	}
 
 	if (patterns.length % 2 === 1) {
-		console.log('length', patterns.length, patterns[patterns.length - 1]);
-		squares.push(
+		output.push(
 			makeSquare(
 				patterns[patterns.length - 1]!,
 				patterns[patterns.length - 1]!,
 			),
 		);
 	}
-
-	squares.forEach((square) => console.log(square, ','));
 };
-
-main();
