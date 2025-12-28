@@ -3,7 +3,10 @@ let boundarySideLength = 800;
 let squareSideLength = 50;
 let colorFadeSpeed = 60;
 let started = false;
+let animationType = 2;
 let song = null;
+const HEIGHT = 800;
+const WIDTH = 800;
 
 function setUpMP3FileUpload() {
 	const input = document.getElementById('mp3FileInput');
@@ -27,6 +30,21 @@ function setUpMP3FileUpload() {
 				console.error(err);
 			},
 		);
+	});
+}
+
+function setUpMidiFileUpload() {
+	const input = document.getElementById('midiFileInput');
+
+	input.addEventListener('change', async () => {
+		const f = input.files?.[0];
+		if (!f) return;
+		midiFile = await f.arrayBuffer();
+		if (animationType == 1) {
+			firstAnimationMain();
+		} else {
+			secondAnimationMain();
+		}
 	});
 }
 
@@ -126,54 +144,76 @@ function setup() {
 	setUpMP3FileUpload();
 	setUpMidiFileUpload();
 
-	createCanvas(800, 800);
+	createCanvas(WIDTH, HEIGHT);
 	background(255, 0, 0);
-	rectMode(CENTER);
-	fill(255);
-	stroke(0, 0, 0);
-	rect(
-		boundaryCenter[0],
-		boundaryCenter[1],
-		boundarySideLength,
-		boundarySideLength,
-	);
+
+	if (animationType == 1) {
+		rectMode(CENTER);
+		fill(255);
+		stroke(0, 0, 0);
+		rect(
+			boundaryCenter[0],
+			boundaryCenter[1],
+			boundarySideLength,
+			boundarySideLength,
+		);
+	} else {
+		background(3, 255, 237);
+	}
 
 	squares = [];
 }
 
 function draw() {
 	background(255, 255, 255);
-	rectMode(CENTER);
-	fill(255);
-	stroke(0, 0, 0);
-	console.log(boundarySideLength);
-	rect(
-		boundaryCenter[0],
-		boundaryCenter[1],
-		boundarySideLength,
-		boundarySideLength,
-	);
 
-	if (started) {
-		if (squares.length === 0) {
-			output.forEach((square) => {
-				squares.push(
-					new Square(
-						square.velX,
-						square.velY,
-						square.deltaX,
-						square.deltaY,
-						Math.random() < 0.5 ? 1 : -1,
-						Math.random() < 0.5 ? 1 : -1,
-					),
-				);
+	if (animationType == 1) {
+		rectMode(CENTER);
+		fill(255);
+		stroke(0, 0, 0);
+		rect(
+			boundaryCenter[0],
+			boundaryCenter[1],
+			boundarySideLength,
+			boundarySideLength,
+		);
+
+		if (started) {
+			if (squares.length === 0) {
+				output.forEach((square) => {
+					squares.push(
+						new Square(
+							square.velX,
+							square.velY,
+							square.deltaX,
+							square.deltaY,
+							Math.random() < 0.5 ? 1 : -1,
+							Math.random() < 0.5 ? 1 : -1,
+						),
+					);
+				});
+			}
+
+			colorMode(HSB, 255);
+			squares.forEach((square) => {
+				square.draw();
 			});
+			colorMode(RGB);
 		}
+	} else {
+		fill(255);
+		stroke(0, 0, 0);
+		scale(1, -1);
+		translate(0, -height);
+		translate(width / 2, height / 2);
+		strokeWeight(4);
 
-		colorMode(HSB, 255);
-		squares.forEach((square) => {
-			square.draw();
+		scale(0.1);
+
+		beginShape();
+		vertices.forEach((v) => {
+			vertex(v.x, v.y);
 		});
-		colorMode(RGB);
+		endShape(CLOSE);
 	}
 }

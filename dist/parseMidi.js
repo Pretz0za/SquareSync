@@ -5,17 +5,6 @@ let notes = [];
 let output = [];
 let trackTempo = -1;
 let trackPPQ = -1;
-function setUpMidiFileUpload() {
-    const input = document.getElementById('midiFileInput');
-    input.addEventListener('change', async () => {
-        var _a;
-        const f = (_a = input.files) === null || _a === void 0 ? void 0 : _a[0];
-        if (!f)
-            return;
-        midiFile = await f.arrayBuffer();
-        main();
-    });
-}
 // Knuth Shuffle
 // https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
 function shuffle(array) {
@@ -118,7 +107,7 @@ function longestPatternStartingAt(idx, used) {
     return { pattern: output, length: bestLength };
 }
 function longestPattern(used, firstFalse) {
-    let idx = firstFalse || used.indexOf(false);
+    let idx = firstFalse !== null && firstFalse !== void 0 ? firstFalse : used.indexOf(false);
     let output = { begin: 0, frequency: 0 };
     let bestLength = 0;
     for (; idx < notes.length; idx++) {
@@ -141,7 +130,7 @@ function calculatePatterns(used) {
     }
     return output;
 }
-const main = () => {
+const firstAnimationMain = () => {
     var _a;
     const midi = new Midi(midiFile);
     trackTempo = ((_a = midi.header.tempos[0]) === null || _a === void 0 ? void 0 : _a.bpm) || 120; // BPM

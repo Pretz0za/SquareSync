@@ -19,17 +19,6 @@ type NotePattern = {
 	frequency: number;
 };
 
-function setUpMidiFileUpload() {
-	const input = document.getElementById('midiFileInput') as HTMLInputElement;
-
-	input.addEventListener('change', async () => {
-		const f = input.files?.[0];
-		if (!f) return;
-		midiFile = await f.arrayBuffer();
-		main();
-	});
-}
-
 // Knuth Shuffle
 // https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
 function shuffle(array: any[]) {
@@ -177,7 +166,7 @@ function calculatePatterns(used: boolean[]): NotePattern[] {
 	return output;
 }
 
-const main = () => {
+const firstAnimationMain = () => {
 	const midi = new Midi(midiFile);
 	trackTempo = midi.header.tempos[0]?.bpm || 120; // BPM
 	trackPPQ = midi.header.ppq; // Pulses (ticks) per quarter note
