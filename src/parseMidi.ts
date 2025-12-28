@@ -30,6 +30,22 @@ function setUpMidiFileUpload() {
 	});
 }
 
+// Knuth Shuffle
+// https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+function shuffle(array: any[]) {
+	let currentIndex = array.length;
+
+	while (currentIndex != 0) {
+		let randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex--;
+
+		[array[currentIndex], array[randomIndex]] = [
+			array[randomIndex],
+			array[currentIndex],
+		];
+	}
+}
+
 function createPattern(note1: any, note2: any): NotePattern {
 	return { begin: note1.ticks, frequency: note2.ticks - note1.ticks };
 }
@@ -41,7 +57,7 @@ function binarySearchNotes(
 	left: number,
 	right: number,
 ): number {
-	let mid, result;
+	let mid: number, result: number | undefined;
 	while (left <= right) {
 		mid = left + Math.trunc((right - left) / 2);
 
@@ -134,7 +150,7 @@ function longestPatternStartingAt(
 }
 
 function longestPattern(used: boolean[], firstFalse?: number): NotePattern {
-	let idx = firstFalse || used.indexOf(false);
+	let idx = firstFalse ?? used.indexOf(false);
 	let output: NotePattern = { begin: 0, frequency: 0 };
 	let bestLength = 0;
 
@@ -151,10 +167,10 @@ function longestPattern(used: boolean[], firstFalse?: number): NotePattern {
 
 function calculatePatterns(used: boolean[]): NotePattern[] {
 	let output: NotePattern[] = [];
-	let idx;
+	let idx: number;
 	while ((idx = used.indexOf(false)) !== -1) {
-		let pattern = longestPatternStartingAt(idx, used).pattern;
-		//let pattern = longestPattern(used, idx);
+		//let pattern = longestPatternStartingAt(idx, used).pattern;
+		let pattern = longestPattern(used, idx);
 		consumePattern(pattern, used);
 		output.push(pattern);
 	}
@@ -170,6 +186,7 @@ const main = () => {
 	});
 	let used: boolean[] = Array(notes.length).fill(false);
 	let patterns = calculatePatterns(used);
+	shuffle(patterns);
 
 	for (let i = 1; i < patterns.length; i += 2) {
 		output.push(makeSquare(patterns[i]!, patterns[i - 1]!));

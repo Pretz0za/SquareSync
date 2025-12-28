@@ -1,7 +1,7 @@
 let boundaryCenter = [400, 400];
-let boundarySideLength = 400;
+let boundarySideLength = 800;
 let squareSideLength = 50;
-let colorFadeSpeed = 30;
+let colorFadeSpeed = 60;
 let started = false;
 let song = null;
 
@@ -104,7 +104,7 @@ class Square {
 			0,
 		);
 		fill(this.color, 255, 255, this.opacity);
-		rect(this.x, this.y, 50, 50);
+		rect(this.x, this.y, squareSideLength, squareSideLength);
 		this.x += this.velX;
 		this.y += this.velY;
 	}
@@ -131,7 +131,12 @@ function setup() {
 	rectMode(CENTER);
 	fill(255);
 	stroke(0, 0, 0);
-	rect(400, 400, 400, 400);
+	rect(
+		boundaryCenter[0],
+		boundaryCenter[1],
+		boundarySideLength,
+		boundarySideLength,
+	);
 
 	squares = [];
 }
@@ -141,7 +146,13 @@ function draw() {
 	rectMode(CENTER);
 	fill(255);
 	stroke(0, 0, 0);
-	rect(400, 400, 400, 400);
+	console.log(boundarySideLength);
+	rect(
+		boundaryCenter[0],
+		boundaryCenter[1],
+		boundarySideLength,
+		boundarySideLength,
+	);
 
 	if (started) {
 		if (squares.length === 0) {

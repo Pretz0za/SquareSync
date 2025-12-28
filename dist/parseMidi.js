@@ -16,6 +16,19 @@ function setUpMidiFileUpload() {
         main();
     });
 }
+// Knuth Shuffle
+// https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+function shuffle(array) {
+    let currentIndex = array.length;
+    while (currentIndex != 0) {
+        let randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [
+            array[randomIndex],
+            array[currentIndex],
+        ];
+    }
+}
 function createPattern(note1, note2) {
     return { begin: note1.ticks, frequency: note2.ticks - note1.ticks };
 }
@@ -121,8 +134,8 @@ function calculatePatterns(used) {
     let output = [];
     let idx;
     while ((idx = used.indexOf(false)) !== -1) {
-        let pattern = longestPatternStartingAt(idx, used).pattern;
-        //let pattern = longestPattern(used, idx);
+        //let pattern = longestPatternStartingAt(idx, used).pattern;
+        let pattern = longestPattern(used, idx);
         consumePattern(pattern, used);
         output.push(pattern);
     }
@@ -130,7 +143,6 @@ function calculatePatterns(used) {
 }
 const main = () => {
     var _a;
-    console.log(Midi);
     const midi = new Midi(midiFile);
     trackTempo = ((_a = midi.header.tempos[0]) === null || _a === void 0 ? void 0 : _a.bpm) || 120; // BPM
     trackPPQ = midi.header.ppq; // Pulses (ticks) per quarter note
@@ -140,15 +152,12 @@ const main = () => {
     });
     let used = Array(notes.length).fill(false);
     let patterns = calculatePatterns(used);
-    console.log(patterns);
+    shuffle(patterns);
     for (let i = 1; i < patterns.length; i += 2) {
-        console.log(i);
         output.push(makeSquare(patterns[i], patterns[i - 1]));
     }
     if (patterns.length % 2 === 1) {
-        console.log('length', patterns.length, patterns[patterns.length - 1]);
         output.push(makeSquare(patterns[patterns.length - 1], patterns[patterns.length - 1]));
     }
-    output.forEach((square) => console.log(square, ','));
 };
 //# sourceMappingURL=parseMidi.js.map
