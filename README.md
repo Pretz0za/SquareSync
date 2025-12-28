@@ -1,0 +1,1 @@
+This is a remake of an old project (https://github.com/Pretz0za/Moving-Muscial-Square) and (https://github.com/Pretz0za/Square-Music) in JavaScript and with a simple HTML GUI. There are two animation types; the active one is set by changing the animationType variable in js/sketch.js. Uploading a .mid and a .mp3 that matches the MIDI loads the animation, pressing Enter starts it. 
