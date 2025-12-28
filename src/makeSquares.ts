@@ -3,8 +3,8 @@ declare const squareSideLength: number;
 
 function makeSquare(xPattern: NotePattern, yPattern: NotePattern): SquareType {
 	const FPS = 60;
-	const TICKS_PER_SECOND = (trackTempo / 60) * trackPPQ; // 152 ticks/second
-	const SECONDS_PER_TICK = 1 / TICKS_PER_SECOND; // 0.00658 seconds/tick
+	const TICKS_PER_SECOND = (trackTempo / 60) * trackPPQ;
+	const SECONDS_PER_TICK = 1 / TICKS_PER_SECOND;
 
 	const xFreqSeconds = xPattern.frequency * SECONDS_PER_TICK;
 	const yFreqSeconds = yPattern.frequency * SECONDS_PER_TICK;

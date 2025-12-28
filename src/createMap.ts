@@ -1,7 +1,10 @@
 // Given an array of note time deltas, generate collision coordinates and vertex array from that
 
 let velocity = [4, 4]; // pixels/tick, we use MIDI track info to get pixels/frame velocity
+let perFrameVel = velocity;
 let vertices: Point[] = [];
+let collisions: Point[] = [];
+declare const FPS;
 
 type Point = {
 	x: number;
@@ -26,7 +29,7 @@ function calculateCollisionPoints(timeDeltas: number[]): Point[] {
 
 	for (let i = 0; i < timeDeltas.length; i++) {
 		let point = {
-			x: lastPoint.x + direction * velocity[0] * timeDeltas[i],
+			x: lastPoint.x + direction * (velocity[0] * timeDeltas[i] + 50),
 			y: lastPoint.y + velocity[1] * timeDeltas[i],
 		};
 
@@ -57,6 +60,11 @@ function calculateMapVertices(collisions: Point[]): Point[] {
 		}
 	}
 
+	output[output.length - 1] = {
+		x: output[output.length - 1].x,
+		y: output[output.length - 1].y + 50,
+	};
+
 	let lastOdd = collisions.length - 1;
 	if (!(lastOdd % 2)) {
 		lastOdd--;
@@ -65,9 +73,11 @@ function calculateMapVertices(collisions: Point[]): Point[] {
 	for (let i = lastOdd; i >= 0; i -= 2) {
 		// vertex above collision
 		if (i + 1 < collisions.length) {
-			output.push({ x: collisions[i].x, y: collisions[i + 1].y });
+			if (i == lastOdd)
+				output.push({ x: collisions[i].x, y: collisions[i + 1].y + 50 });
+			else output.push({ x: collisions[i].x, y: collisions[i + 1].y });
 		} else {
-			output.push(collisions[i]);
+			output.push({ x: collisions[i].x, y: collisions[i].y + 50 });
 		}
 
 		// vertex under collision
@@ -89,6 +99,13 @@ function secondAnimationMain() {
 	const midi = new Midi(midiFile);
 	trackTempo = midi.header.tempos[0]?.bpm || 120; // BPM
 	trackPPQ = midi.header.ppq; // Pulses (ticks) per quarter note
+	const TICKS_PER_SECOND = (trackTempo / 60) * trackPPQ;
+	const TICKS_PER_FRAME = TICKS_PER_SECOND / FPS;
+
+	perFrameVel = [velocity[0] * TICKS_PER_FRAME, velocity[1] * TICKS_PER_FRAME];
+	console.log('px/tick:', velocity);
+	console.log('px/frame:', perFrameVel);
+
 	midi.tracks.forEach((track) => {
 		if (track.notes.length > 0) notes = track.notes;
 	});
@@ -96,11 +113,12 @@ function secondAnimationMain() {
 
 	let times = notes.map((note) => note.ticks);
 	times = [...new Set(times)];
+	if (times[0] != 0) times = [0, ...times]; // this ensures even indices are right side collisions
 	console.log('times:', times);
 
 	let deltas = calculateTimeDeltas(times);
 	console.log('deltas', deltas);
-	let collisions = calculateCollisionPoints(deltas);
+	collisions = calculateCollisionPoints(deltas);
 
 	console.log('collisions', collisions);
 	vertices = calculateMapVertices(collisions);
