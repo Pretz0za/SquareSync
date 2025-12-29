@@ -1,9 +1,21 @@
+// Possible third animation type:
+// https://www.instagram.com/p/CgpAX6aP_0d/
+// reference: https://www.cerritos.edu/dford/SitePages/Math_70_F13/CircleDefinitionsandTheorems.pdf#:~:text=congruent.%20Chord%20Arcs%20Theorem%20If%20two%20chords,congruent%2C%20then%20their%20intercepted%20arcs%20are%20congruent.
+// Star Polygons. Connect every kth vertex of an inscribed regular n-gon. They have the following properties:
+// 1- All chords have equal length.
+// 2- intersecting chords. This leads to much more interesting visualizations.
+// 3- Cyclical. One full cycle is
+
+let frozen = false;
+
 let boundaryCenter = [400, 400];
+let boundingCircleRadius = 400;
+let circleRadius = 50;
 let boundarySideLength = 800;
 let squareSideLength = 50;
 let colorFadeSpeed = 60;
 let started = false;
-let animationType = 2;
+let animationType = 3;
 let song = null;
 let rectPos = [0, 0];
 let collisionIdx = 0;
@@ -12,7 +24,7 @@ let opacity = 0;
 let color = 0;
 const HEIGHT = 800;
 const WIDTH = 800;
-const FPS = 60;
+const FPS = 30;
 const SUBSTEPS = 120;
 
 function setUpMP3FileUpload() {
@@ -51,7 +63,7 @@ function setUpMidiFileUpload() {
 		midiFile = await f.arrayBuffer();
 		if (animationType == 1) {
 			firstAnimationMain();
-		} else {
+		} else if (animationType == 2) {
 			secondAnimationMain();
 			rectPos = [0, 0];
 			started = false;
@@ -61,7 +73,8 @@ function setUpMidiFileUpload() {
 					break;
 				}
 			}
-			console.log('first collision:', collisions[collisionIdx]);
+		} else {
+			thirdAnimationMain();
 		}
 	});
 }
@@ -69,82 +82,6 @@ function setUpMidiFileUpload() {
 function randomHue() {
 	return lerp(0, 360, Math.random());
 	//return 360 * ((sin(PI * Math.random() - 1.5) + 1) / 2);
-}
-
-class Square {
-	constructor(velX, velY, deltaX, deltaY, directionX, directionY) {
-		this.velX = velX * directionX;
-		this.velY = velY * directionY;
-		this.x =
-			boundaryCenter[0] -
-			(boundarySideLength / 2) * directionX +
-			(deltaX + squareSideLength / 2) * directionX;
-		this.y =
-			boundaryCenter[1] -
-			(boundarySideLength / 2) * directionY +
-			(deltaY + squareSideLength / 2) * directionY;
-		this.lastHit = -1000;
-		this.opacity = 0;
-		this.color = 0;
-	}
-
-	draw() {
-		if (
-			boundaryCenter[0] +
-				boundarySideLength / 2 -
-				(this.x + squareSideLength / 2) <
-			0
-		) {
-			this.lastHit = frameCount;
-			this.color = randomHue();
-			this.velX *= -1;
-			this.x =
-				boundaryCenter[0] + boundarySideLength / 2 - squareSideLength / 2;
-		} else if (
-			boundaryCenter[0] -
-				boundarySideLength / 2 -
-				(this.x - squareSideLength / 2) >
-			0
-		) {
-			this.lastHit = frameCount;
-			this.color = randomHue();
-			this.velX *= -1;
-			this.x =
-				boundaryCenter[0] - boundarySideLength / 2 + squareSideLength / 2;
-		}
-
-		if (
-			boundaryCenter[1] +
-				boundarySideLength / 2 -
-				(this.y + squareSideLength / 2) <
-			0
-		) {
-			this.lastHit = frameCount;
-			this.color = randomHue();
-			this.velY *= -1;
-			this.y =
-				boundaryCenter[1] + boundarySideLength / 2 - squareSideLength / 2;
-		} else if (
-			boundaryCenter[1] -
-				boundarySideLength / 2 -
-				(this.y - squareSideLength / 2) >
-			0
-		) {
-			this.lastHit = frameCount;
-			this.color = randomHue();
-			this.velY *= -1;
-			this.y =
-				boundaryCenter[1] - boundarySideLength / 2 + squareSideLength / 2;
-		}
-		this.opacity = max(
-			map(frameCount, this.lastHit, this.lastHit + colorFadeSpeed, 255, 0),
-			0,
-		);
-		fill(this.color, 255, 255, this.opacity);
-		rect(this.x, this.y, squareSideLength, squareSideLength);
-		this.x += this.velX;
-		this.y += this.velY;
-	}
 }
 
 function preload() {}
@@ -158,8 +95,11 @@ function keyPressed() {
 }
 
 let squares = [];
+let circles = [];
 
 function setup() {
+	frameRate(FPS);
+
 	setUpMP3FileUpload();
 	setUpMidiFileUpload();
 
@@ -176,11 +116,16 @@ function setup() {
 			boundarySideLength,
 			boundarySideLength,
 		);
-	} else {
+	} else if (animationType == 2) {
 		background(3, 255, 237);
+	} else {
+		background(255, 255, 255);
+		fill(255);
+		circle(boundaryCenter[0], boundaryCenter[1], 2 * boundingCircleRadius);
 	}
 
 	squares = [];
+	circles = [];
 }
 
 function draw() {
@@ -217,7 +162,7 @@ function draw() {
 			});
 			colorMode(RGB);
 		}
-	} else {
+	} else if (animationType === 2) {
 		background(3, 255, 237);
 		fill(255);
 		stroke(0, 0, 0);
@@ -254,10 +199,36 @@ function draw() {
 			map(frameCount, lastHit, lastHit + colorFadeSpeed, 255, 0),
 			0,
 		);
-		console.log(lastHit, opacity);
 		colorMode(HSB, 255);
 		fill(color, 255, 255, opacity);
 		rect(rectPos[0], rectPos[1], 50, 50);
 		colorMode(RGB);
+	} else {
+		if (!frozen) {
+			background(255, 255, 255);
+			fill(255);
+			circle(boundaryCenter[0], boundaryCenter[1], 2 * boundingCircleRadius);
+
+			if (started) {
+				if (circles.length === 0) {
+					circleOutput.forEach((circle) => circles.push(new Circle(circle)));
+					// circles.push(
+					// 	new Circle({
+					// 		lastVertex: 0,
+					// 		vertexCount: 2,
+					// 		k: 1,
+					// 		lerpCoefficient: 0.5,
+					// 		lerpIncrement: 0.01,
+					// 	}),
+					// );
+				}
+				colorMode(HSB, 255);
+				circles.forEach((circle) => {
+					circle.draw();
+				});
+				colorMode(RGB);
+				//frozen = true;
+			}
+		}
 	}
 }

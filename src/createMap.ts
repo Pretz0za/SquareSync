@@ -112,7 +112,14 @@ function secondAnimationMain() {
 	console.log('notes:', notes);
 
 	let times = notes.map((note) => note.ticks);
-	times = [...new Set(times)];
+	let lastTick = -1;
+	times = times.filter((tick) => {
+		if (tick === lastTick) return false;
+		else {
+			lastTick = tick;
+			return true;
+		}
+	});
 	if (times[0] != 0) times = [0, ...times]; // this ensures even indices are right side collisions
 	console.log('times:', times);
 

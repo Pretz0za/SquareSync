@@ -21,8 +21,8 @@ function shuffle(array) {
 function createPattern(note1, note2) {
     return { begin: note1.ticks, frequency: note2.ticks - note1.ticks };
 }
-// Performs a binary search through notes[left : right]. Returns Note such that
-// note.ticks = target.
+// Performs a binary search through notes[left : right]. Returns the first
+// instance of Note such that note.ticks = target.
 function binarySearchNotes(target, left, right) {
     let mid, result;
     while (left <= right) {
@@ -123,8 +123,8 @@ function calculatePatterns(used) {
     let output = [];
     let idx;
     while ((idx = used.indexOf(false)) !== -1) {
-        //let pattern = longestPatternStartingAt(idx, used).pattern;
-        let pattern = longestPattern(used, idx);
+        let pattern = longestPatternStartingAt(idx, used).pattern;
+        //let pattern = longestPattern(used, idx);
         consumePattern(pattern, used);
         output.push(pattern);
     }
@@ -139,8 +139,18 @@ const firstAnimationMain = () => {
         if (track.notes.length > 0)
             notes = track.notes;
     });
+    let lastTick = -1;
+    notes = notes.filter((note) => {
+        if (note.ticks === lastTick)
+            return false;
+        else {
+            lastTick = note.ticks;
+            return true;
+        }
+    });
     let used = Array(notes.length).fill(false);
     let patterns = calculatePatterns(used);
+    console.log('pattern count:', patterns.length);
     shuffle(patterns);
     for (let i = 1; i < patterns.length; i += 2) {
         output.push(makeSquare(patterns[i], patterns[i - 1]));

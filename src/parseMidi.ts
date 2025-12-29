@@ -6,6 +6,17 @@ let output: SquareType[] = [];
 let trackTempo = -1;
 let trackPPQ = -1;
 
+// This defines one small circle that bounces inside the bounding circle.
+// The paths they take are defined by connecting ever kth vertex of the inscribed
+// regular polygon with vertexCount sides. This is for animationType = 3.
+type CircleType = {
+	lastVertex: number; // Index of the previous polygon vertex we collided with.
+	vertexCount: number; // Defines n for the polygon.
+	k: number; // Defines our path along the polygon vertices. nextVertex = lastVertex + k (mod vertexCount)
+	lerpCoefficient: number; // The circle's position when lerping lastVertex and the next collision.
+	lerpIncrement: number; // How fast the circle goes along the path.
+};
+
 type SquareType = {
 	sideLength: number;
 	deltaX: number;
@@ -39,8 +50,8 @@ function createPattern(note1: any, note2: any): NotePattern {
 	return { begin: note1.ticks, frequency: note2.ticks - note1.ticks };
 }
 
-// Performs a binary search through notes[left : right]. Returns Note such that
-// note.ticks = target.
+// Performs a binary search through notes[left : right]. Returns the first
+// instance of Note such that note.ticks = target.
 function binarySearchNotes(
 	target: number,
 	left: number,
@@ -158,8 +169,8 @@ function calculatePatterns(used: boolean[]): NotePattern[] {
 	let output: NotePattern[] = [];
 	let idx: number;
 	while ((idx = used.indexOf(false)) !== -1) {
-		//let pattern = longestPatternStartingAt(idx, used).pattern;
-		let pattern = longestPattern(used, idx);
+		let pattern = longestPatternStartingAt(idx, used).pattern;
+		//let pattern = longestPattern(used, idx);
 		consumePattern(pattern, used);
 		output.push(pattern);
 	}
@@ -173,8 +184,19 @@ const firstAnimationMain = () => {
 	midi.tracks.forEach((track) => {
 		if (track.notes.length > 0) notes = track.notes;
 	});
+	let lastTick = -1;
+	notes = notes.filter((note) => {
+		if (note.ticks === lastTick) return false;
+		else {
+			lastTick = note.ticks;
+			return true;
+		}
+	});
 	let used: boolean[] = Array(notes.length).fill(false);
 	let patterns = calculatePatterns(used);
+
+	console.log('pattern count:', patterns.length);
+
 	shuffle(patterns);
 
 	for (let i = 1; i < patterns.length; i += 2) {
