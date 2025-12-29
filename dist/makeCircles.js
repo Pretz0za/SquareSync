@@ -53,7 +53,7 @@ function makeCircle(pattern) {
         else
             k -= delta;
     }
-    console.log(`new circle. n: ${n}, k: ${k}. Should collide: ${count} times`);
+    //console.log(`new circle. n: ${n}, k: ${k}. Should collide: ${count} times`);
     let theta = ((2 * Math.PI) / n) * k;
     if (theta > Math.PI)
         theta = 2 * Math.PI - theta;
